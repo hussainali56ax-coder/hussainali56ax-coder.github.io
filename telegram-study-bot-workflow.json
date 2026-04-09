@@ -1,0 +1,691 @@
+{
+  "name": "Telegram University Study Bot (Gemini)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "Telegram_Trigger",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1680,
+        0
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_BOT_TOKEN",
+          "name": "TELEGRAM_BOT_TOKEN"
+        }
+      },
+      "notes": "Receives Telegram text, captions, and documents."
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $json.message || {};\nconst doc = msg.document || null;\n\nreturn [{\n  json: {\n    chat_id: msg.chat?.id || null,\n    user_id: msg.from?.id || null,\n    file_id: doc?.file_id || null,\n    file_name: doc?.file_name || null,\n    mime_type: doc?.mime_type || null,\n    text_or_caption: msg.text || msg.caption || '',\n    has_document: !!doc\n  }\n}];"
+      },
+      "id": "Normalize_Input",
+      "name": "Normalize Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1440,
+        0
+      ],
+      "notes": "Extracts required message fields in a stable structure."
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "⏳ تم استلام طلبك، جاري معالجة المحتوى وإنشاء الملخص والأسئلة...",
+        "additionalFields": {}
+      },
+      "id": "Send_Processing_Message",
+      "name": "Send Processing Message (AR)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1220,
+        0
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_BOT_TOKEN",
+          "name": "TELEGRAM_BOT_TOKEN"
+        }
+      },
+      "notes": "Immediate feedback to user for better UX."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.has_document }}",
+              "operation": "isTrue"
+            }
+          ]
+        }
+      },
+      "id": "IF_Has_Document",
+      "name": "IF Has Document?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1000,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.mime_type || '' }}",
+              "operation": "equals",
+              "value2": "application/pdf"
+            }
+          ]
+        }
+      },
+      "id": "IF_PDF_Only",
+      "name": "IF PDF Mime Type?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -780,
+        -120
+      ],
+      "notes": "Main accepted file is PDF."
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "⚠️ عذرًا، الصيغة غير مدعومة. يرجى إرسال ملف PDF أو نص مباشر فقط.",
+        "additionalFields": {}
+      },
+      "id": "Send_Unsupported_Type",
+      "name": "Send Unsupported Type Error (AR)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -560,
+        -260
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_BOT_TOKEN",
+          "name": "TELEGRAM_BOT_TOKEN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "fileId": "={{ $json.file_id }}"
+      },
+      "id": "Telegram_Get_File",
+      "name": "Telegram Get File",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -560,
+        -120
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_BOT_TOKEN",
+          "name": "TELEGRAM_BOT_TOKEN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/file/bot{{$env.TELEGRAM_BOT_TOKEN}}/{{$json.result.file_path}}",
+        "responseFormat": "file",
+        "options": {}
+      },
+      "id": "Download_PDF",
+      "name": "Download PDF Binary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -340,
+        -120
+      ],
+      "notes": "Downloads Telegram file with bot token from env."
+    },
+    {
+      "parameters": {
+        "operation": "extractFromFile",
+        "binaryPropertyName": "data"
+      },
+      "id": "Extract_Text_From_PDF",
+      "name": "Extract Text from PDF",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -120,
+        -120
+      ],
+      "notes": "Reads PDF binary and extracts plain text."
+    },
+    {
+      "parameters": {
+        "jsCode": "const lectureText = $json.text || '';\nconst inputText = $json.text_or_caption || '';\nconst sourceText = (lectureText || inputText || '').trim();\n\nif (!sourceText) {\n  return [{ json: { ...$json, source_text: '', is_empty: true } }];\n}\n\nlet cleaned = sourceText\n  .replace(/\\r/g, '\\n')\n  .replace(/\\t+/g, ' ')\n  .replace(/[ ]{2,}/g, ' ')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\nreturn [{\n  json: {\n    ...$json,\n    source_text: cleaned,\n    is_empty: cleaned.length === 0\n  }\n}];"
+      },
+      "id": "Clean_Text",
+      "name": "Clean Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        0
+      ],
+      "notes": "Normalizes text from PDF or direct message/caption."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.is_empty }}",
+              "operation": "isTrue"
+            }
+          ]
+        }
+      },
+      "id": "IF_Empty_Text",
+      "name": "IF Empty Text?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        540,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "⚠️ لم أتمكن من استخراج نص قابل للمعالجة من الملف. أعد إرسال PDF أو أرسل النص مباشرة.",
+        "additionalFields": {}
+      },
+      "id": "Send_Empty_Text_Error",
+      "name": "Send Empty Text Error (AR)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        760,
+        -120
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_BOT_TOKEN",
+          "name": "TELEGRAM_BOT_TOKEN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $json.source_text || '';\nconst MAX_CHARS = 12000;\nconst OVERLAP = 500;\n\nif (text.length <= MAX_CHARS) {\n  return [{ json: { ...$json, chunk_index: 1, total_chunks: 1, chunk_text: text } }];\n}\n\nconst chunks = [];\nlet start = 0;\nwhile (start < text.length) {\n  let end = Math.min(start + MAX_CHARS, text.length);\n  if (end < text.length) {\n    const boundary = text.lastIndexOf('\\n', end);\n    if (boundary > start + 3000) end = boundary;\n  }\n\n  chunks.push(text.slice(start, end).trim());\n  if (end >= text.length) break;\n  start = Math.max(0, end - OVERLAP);\n}\n\nreturn chunks.map((chunk, i) => ({\n  json: {\n    ...$json,\n    chunk_index: i + 1,\n    total_chunks: chunks.length,\n    chunk_text: chunk\n  }\n}));"
+      },
+      "id": "Chunk_Text",
+      "name": "Chunk Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        120
+      ],
+      "notes": "Splits long lectures into model-safe chunks."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={{$env.GEMINI_API_KEY}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are a strict academic assistant. Summarize the following lecture chunk in Arabic, preserving medical/scientific terms in English exactly as written. Do not add information not present in the text. Keep it concise and exam-oriented.\\n\\nLecture chunk {{$json.chunk_index}}/{{$json.total_chunks}}:\\n{{$json.chunk_text}}\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.2,\n    \"maxOutputTokens\": 1800\n  }\n}",
+        "options": {}
+      },
+      "id": "Gemini_Chunk_Summary",
+      "name": "Gemini Chunk Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        980,
+        120
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Gemini chunk summarization (low temperature, no hallucinations)."
+    },
+    {
+      "parameters": {
+        "jsCode": "const out = [];\nfor (const item of $input.all()) {\n  const txt = item.json?.candidates?.[0]?.content?.parts?.[0]?.text || '';\n  out.push({\n    chat_id: item.json.chat_id,\n    user_id: item.json.user_id,\n    source_text: item.json.source_text,\n    chunk_summary: txt.trim(),\n    chunk_index: item.json.chunk_index,\n    total_chunks: item.json.total_chunks\n  });\n}\n\nout.sort((a,b)=>a.chunk_index-b.chunk_index);\nconst merged = out.map(x => `جزء ${x.chunk_index}/${x.total_chunks}:\\n${x.chunk_summary}`).join('\\n\\n');\n\nreturn [{ json: { ...out[0], merged_chunk_summaries: merged } }];"
+      },
+      "id": "Merge_Chunk_Summaries",
+      "name": "Merge Chunk Summaries",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={{$env.GEMINI_API_KEY}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"Transform the intermediate chunk summaries into one final, professional Arabic study summary.\\nRules:\\n- Do not add any information not present in the lecture content.\\n- Keep medical/scientific terms in English exactly as written.\\n- Be concise, high-yield, exam-oriented.\\n- Use this exact structure:\\n  - Lecture Title / Topic\\n  - Short Overview\\n  - High-Yield Points\\n  - Important Definitions\\n  - Key Lists / Classifications / Mechanisms if present\\n  - Common Exam Traps\\n  - Quick Revision\\n\\nIntermediate summaries:\\n{{$json.merged_chunk_summaries}}\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.2,\n    \"maxOutputTokens\": 2200\n  }\n}",
+        "options": {}
+      },
+      "id": "Gemini_Final_Summary",
+      "name": "Gemini Final Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1420,
+        120
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Produces final structured Arabic summary."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={{$env.GEMINI_API_KEY}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"Using ONLY the lecture content below, generate exactly 10 university-level MCQs.\\nHard constraints:\\n1) Each question has 4 options: A, B, C, D.\\n2) No external facts beyond the lecture text.\\n3) Vary difficulty (easy / medium / hard).\\n4) After all questions, add a section titled: Answers & Explanations.\\n5) For each question provide: correct answer + short explanation.\\n6) Write in Arabic, while preserving medical/scientific terms in English as-is.\\n\\nLecture text:\\n{{$json.source_text}}\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.3,\n    \"maxOutputTokens\": 2600\n  }\n}",
+        "options": {}
+      },
+      "id": "Gemini_Generate_MCQs",
+      "name": "Gemini Generate MCQs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1640,
+        120
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Creates 10 exam-style MCQs + answer explanations."
+    },
+    {
+      "parameters": {
+        "jsCode": "const summary = $json?.candidates?.[0]?.content?.parts?.[0]?.text || '';\nconst mcq = $item(0).$node['Gemini Generate MCQs'].json?.candidates?.[0]?.content?.parts?.[0]?.text || '';\n\nif (!summary || !mcq) {\n  return [{ json: { ...$json, ai_failed: true } }];\n}\n\nconst highYield = (summary.match(/High-Yield Points[\\s\\S]*?(?:Important Definitions|$)/i)?.[0] || summary).trim();\n\nconst mcqSplit = mcq.split(/Answers\\s*&\\s*Explanations/i);\nconst mcqQuestions = (mcqSplit[0] || mcq).trim();\nconst mcqAnswers = (mcqSplit[1] || '').trim();\n\nreturn [{\n  json: {\n    chat_id: $json.chat_id || $item(0).$node['Merge Chunk Summaries'].json.chat_id,\n    final_summary: summary.trim(),\n    high_yield: highYield,\n    mcq_questions: mcqQuestions,\n    mcq_answers: mcqAnswers || 'لم يتم إرجاع قسم Answers & Explanations بشكل منفصل.' ,\n    ai_failed: false\n  }\n}];"
+      },
+      "id": "Build_Final_Text_Blocks",
+      "name": "Build Final Text Blocks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1860,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.ai_failed }}",
+              "operation": "isTrue"
+            }
+          ]
+        }
+      },
+      "id": "IF_AI_Failed",
+      "name": "IF AI Failed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2080,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "⚠️ حدث خطأ أثناء توليد الملخص أو الأسئلة عبر Gemini. حاول مرة أخرى بعد قليل.",
+        "additionalFields": {}
+      },
+      "id": "Send_Gemini_Error",
+      "name": "Send Gemini Error (AR)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2300,
+        0
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_BOT_TOKEN",
+          "name": "TELEGRAM_BOT_TOKEN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const TELEGRAM_LIMIT = 3900;\n\nfunction splitLong(label, content) {\n  const text = `${label}\\n\\n${content || ''}`.trim();\n  if (text.length <= TELEGRAM_LIMIT) return [text];\n\n  const parts = [];\n  let rest = text;\n  while (rest.length > TELEGRAM_LIMIT) {\n    let cut = rest.lastIndexOf('\\n', TELEGRAM_LIMIT);\n    if (cut < 1000) cut = TELEGRAM_LIMIT;\n    parts.push(rest.slice(0, cut).trim());\n    rest = rest.slice(cut).trim();\n  }\n  if (rest) parts.push(rest);\n  return parts;\n}\n\nconst sections = [\n  ['📘 Summary', $json.final_summary],\n  ['🎯 High-Yield Points', $json.high_yield],\n  ['❓ MCQs', $json.mcq_questions],\n  ['✅ Answers with Explanations', $json.mcq_answers]\n];\n\nconst items = [];\nfor (const [label, content] of sections) {\n  for (const msg of splitLong(label, content)) {\n    items.push({ json: { chat_id: $json.chat_id, text: msg } });\n  }\n}\nreturn items;"
+      },
+      "id": "Split_For_Telegram",
+      "name": "Split For Telegram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2300,
+        220
+      ],
+      "notes": "Ensures message length fits Telegram limits and preserves order."
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "id": "Telegram_Send_Result",
+      "name": "Telegram Send Result",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2520,
+        220
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_BOT_TOKEN",
+          "name": "TELEGRAM_BOT_TOKEN"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "⚠️ تعذر إرسال جزء من الرد عبر Telegram. يرجى المحاولة مرة أخرى.",
+        "additionalFields": {}
+      },
+      "id": "Send_Telegram_Fallback",
+      "name": "Send Telegram Failure Fallback (AR)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2740,
+        220
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_BOT_TOKEN",
+          "name": "TELEGRAM_BOT_TOKEN"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Input": {
+      "main": [
+        [
+          {
+            "node": "Send Processing Message (AR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Processing Message (AR)": {
+      "main": [
+        [
+          {
+            "node": "IF Has Document?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Has Document?": {
+      "main": [
+        [
+          {
+            "node": "IF PDF Mime Type?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Clean Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF PDF Mime Type?": {
+      "main": [
+        [
+          {
+            "node": "Telegram Get File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Unsupported Type Error (AR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Get File": {
+      "main": [
+        [
+          {
+            "node": "Download PDF Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download PDF Binary": {
+      "main": [
+        [
+          {
+            "node": "Extract Text from PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Text from PDF": {
+      "main": [
+        [
+          {
+            "node": "Clean Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Text": {
+      "main": [
+        [
+          {
+            "node": "IF Empty Text?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Empty Text?": {
+      "main": [
+        [
+          {
+            "node": "Send Empty Text Error (AR)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Chunk Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chunk Text": {
+      "main": [
+        [
+          {
+            "node": "Gemini Chunk Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Chunk Summary": {
+      "main": [
+        [
+          {
+            "node": "Merge Chunk Summaries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Chunk Summaries": {
+      "main": [
+        [
+          {
+            "node": "Gemini Final Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Final Summary": {
+      "main": [
+        [
+          {
+            "node": "Gemini Generate MCQs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Generate MCQs": {
+      "main": [
+        [
+          {
+            "node": "Build Final Text Blocks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Final Text Blocks": {
+      "main": [
+        [
+          {
+            "node": "IF AI Failed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF AI Failed?": {
+      "main": [
+        [
+          {
+            "node": "Send Gemini Error (AR)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Split For Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split For Telegram": {
+      "main": [
+        [
+          {
+            "node": "Telegram Send Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Send Result": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Failure Fallback (AR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "draft-v1-gemini-telegram-study-bot",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "adminUserIdEnv": "ADMIN_USER_ID"
+  },
+  "tags": [
+    {
+      "name": "telegram"
+    },
+    {
+      "name": "gemini"
+    },
+    {
+      "name": "education"
+    }
+  ]
+}
