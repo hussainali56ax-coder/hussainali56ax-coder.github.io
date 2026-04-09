@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>دليل تثبيت 3x-ui على VPS | algazali.me</title>
+  <style>
+    /* ===== Reset & Base ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      background: #0f0f1a;
+      color: #dde1ec;
+      line-height: 1.75;
+      padding: 0;
+    }
+
+    /* ===== Layout ===== */
+    .page-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* ===== Top bar ===== */
+    .topbar {
+      background: #13132a;
+      border-bottom: 1px solid #2a2a4a;
+      padding: 0.7rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+    .topbar a {
+      color: #7eb8f7;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .topbar a:hover { text-decoration: underline; }
+    .topbar span { color: #555; font-size: 0.85rem; }
+
+    /* ===== Headings ===== */
+    h1 {
+      font-size: 2rem;
+      color: #7eb8f7;
+      margin: 2rem 0 0.4rem;
+    }
+    h2 {
+      font-size: 1.35rem;
+      color: #a8c8f8;
+      margin: 2.5rem 0 0.8rem;
+      padding-bottom: 0.3rem;
+      border-bottom: 1px solid #2a2a4a;
+    }
+    h3 {
+      font-size: 1.05rem;
+      color: #c5d8f8;
+      margin: 1.5rem 0 0.5rem;
+    }
+    p { margin-bottom: 0.9rem; }
+
+    /* ===== Security warning box ===== */
+    .warning-box {
+      background: #2a1010;
+      border: 1px solid #e05555;
+      border-radius: 10px;
+      padding: 1.2rem 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .warning-box .warn-title {
+      font-size: 1.05rem;
+      font-weight: bold;
+      color: #ff7070;
+      margin-bottom: 0.6rem;
+    }
+    .warning-box ul { padding-right: 1.2rem; }
+    .warning-box ul li { margin-bottom: 0.4rem; color: #f0a0a0; }
+
+    /* ===== Info/tip box ===== */
+    .tip-box {
+      background: #0e2233;
+      border: 1px solid #3a7abf;
+      border-radius: 10px;
+      padding: 1rem 1.4rem;
+      margin: 1.2rem 0;
+      color: #a8c8f8;
+    }
+    .tip-box strong { color: #7eb8f7; }
+
+    /* ===== Success box ===== */
+    .success-box {
+      background: #0a2010;
+      border: 1px solid #3aab5a;
+      border-radius: 10px;
+      padding: 1rem 1.4rem;
+      margin: 1.2rem 0;
+      color: #9ae0ae;
+    }
+
+    /* ===== Code blocks ===== */
+    pre {
+      background: #141428;
+      border: 1px solid #2a2a4a;
+      border-radius: 8px;
+      padding: 1rem 1.3rem;
+      overflow-x: auto;
+      margin: 0.8rem 0 1.2rem;
+      font-size: 0.92rem;
+      direction: ltr;
+      text-align: left;
+    }
+    code {
+      font-family: 'Consolas', 'Courier New', monospace;
+      color: #a8e8a8;
+    }
+    pre code { color: #a8e8a8; }
+    p code, li code {
+      background: #1e1e3a;
+      padding: 0.1em 0.4em;
+      border-radius: 4px;
+      color: #f0c070;
+      font-size: 0.9em;
+    }
+
+    /* ===== Steps list ===== */
+    ol.steps {
+      padding-right: 1.4rem;
+      counter-reset: step-counter;
+      list-style: none;
+    }
+    ol.steps li {
+      counter-increment: step-counter;
+      margin-bottom: 1.2rem;
+      position: relative;
+      padding-right: 2.2rem;
+    }
+    ol.steps li::before {
+      content: counter(step-counter);
+      position: absolute;
+      right: 0;
+      top: 0;
+      background: #3a6abf;
+      color: #fff;
+      font-weight: bold;
+      font-size: 0.8rem;
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ===== Regular lists ===== */
+    ul.regular {
+      padding-right: 1.4rem;
+      margin-bottom: 0.9rem;
+    }
+    ul.regular li { margin-bottom: 0.4rem; }
+
+    /* ===== Table of contents ===== */
+    .toc {
+      background: #141428;
+      border: 1px solid #2a2a4a;
+      border-radius: 10px;
+      padding: 1.2rem 1.5rem;
+      margin: 1.5rem 0;
+      font-size: 0.95rem;
+    }
+    .toc .toc-title {
+      font-weight: bold;
+      color: #7eb8f7;
+      margin-bottom: 0.7rem;
+      font-size: 1rem;
+    }
+    .toc ol {
+      padding-right: 1.2rem;
+    }
+    .toc ol li { margin-bottom: 0.3rem; }
+    .toc a { color: #8ac0e8; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; color: #7eb8f7; }
+
+    /* ===== Section divider ===== */
+    hr {
+      border: none;
+      border-top: 1px solid #2a2a4a;
+      margin: 2.5rem 0;
+    }
+
+    /* ===== Footer ===== */
+    footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #555;
+      margin-top: 4rem;
+      border-top: 1px solid #2a2a4a;
+      padding-top: 1.5rem;
+    }
+    footer a { color: #7eb8f7; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Top navigation bar -->
+  <nav class="topbar">
+    <a href="../index.html">🏠 الرئيسية</a>
+    <span>›</span>
+    <span>دليل تثبيت 3x-ui على VPS</span>
+  </nav>
+
+  <div class="page-wrap">
+
+    <h1>🖥️ دليل تثبيت لوحة 3x-ui (V2Ray/Xray) على VPS</h1>
+    <p>هذا الدليل يشرح كيفية تثبيت لوحة التحكم <strong>3x-ui</strong> على سيرفر VPS يعمل بنظام Ubuntu أو Debian، وتأمينها بشكل صحيح.</p>
+
+    <!-- === SECURITY WARNING === -->
+    <div class="warning-box">
+      <div class="warn-title">⚠️ تحذير أمني مهم — اقرأه قبل البدء!</div>
+      <ul>
+        <li>🚫 <strong>لا تشارك أي أحد</strong> عنوان IP الخاص بسيرفرك، أو اسم المستخدم (root)، أو كلمة مرور SSH.</li>
+        <li>🚫 لا تُرسل بيانات اعتماد لوحة التحكم (المستخدم/كلمة المرور) عبر أي قناة تواصل (تيليغرام، واتساب، إلخ).</li>
+        <li>✅ إذا احتجت مساعدة في تشخيص مشكلة، <strong>شارك النصوص التي تظهر في الطرفية فقط</strong> (رسائل الخطأ) بعد إخفاء أي IP أو بيانات حساسة.</li>
+        <li>✅ نفّذ الأوامر بنفسك من داخل SSH، ولا تدع أي شخص يتصل بسيرفرك عن بُعد بدون إشرافك الكامل.</li>
+        <li>✅ غيّر كلمة مرور SSH الافتراضية فوراً بعد استلام السيرفر، وفعّل المصادقة بالمفتاح (SSH Key) إن أمكن.</li>
+      </ul>
+    </div>
+
+    <!-- === TABLE OF CONTENTS === -->
+    <div class="toc">
+      <div class="toc-title">📋 محتويات الدليل</div>
+      <ol>
+        <li><a href="#requirements">المتطلبات الأساسية</a></li>
+        <li><a href="#connect">الاتصال بالسيرفر عبر SSH</a></li>
+        <li><a href="#install">تثبيت 3x-ui</a></li>
+        <li><a href="#first-login">الدخول للوحة وأول إعداد</a></li>
+        <li><a href="#security">تأمين لوحة التحكم</a></li>
+        <li><a href="#troubleshooting">استكشاف الأخطاء وإصلاحها</a></li>
+        <li><a href="#tls-optional">تفعيل HTTPS (TLS) — اختياري</a></li>
+      </ol>
+    </div>
+
+    <!-- ====================== -->
+    <!-- SECTION 1: REQUIREMENTS -->
+    <!-- ====================== -->
+    <h2 id="requirements">1. المتطلبات الأساسية</h2>
+
+    <p>قبل البدء، تأكد من توفر ما يلي:</p>
+    <ul class="regular">
+      <li>✅ سيرفر VPS يعمل بنظام <strong>Ubuntu 20.04 / 22.04</strong> أو <strong>Debian 10 / 11 / 12</strong></li>
+      <li>✅ وصول Root عبر SSH (عنوان IP + كلمة مرور، أو مفتاح SSH)</li>
+      <li>✅ اتصال إنترنت مستقر على السيرفر</li>
+      <li>✅ برنامج SSH على جهازك (انظر أدناه)</li>
+    </ul>
+
+    <h3>برامج SSH الموصى بها:</h3>
+    <ul class="regular">
+      <li>🪟 <strong>Windows:</strong> <a href="https://www.putty.org/" style="color:#7eb8f7;">PuTTY</a> أو <strong>Windows Terminal</strong> (مدمج في ويندوز 11)</li>
+      <li>🍎 <strong>macOS / Linux:</strong> التطبيق المدمج <code>Terminal</code></li>
+      <li>📱 <strong>Android:</strong> JuiceSSH أو Termius</li>
+    </ul>
+
+    <!-- ====================== -->
+    <!-- SECTION 2: CONNECT SSH -->
+    <!-- ====================== -->
+    <h2 id="connect">2. الاتصال بالسيرفر عبر SSH</h2>
+
+    <ol class="steps">
+      <li>افتح Terminal أو PuTTY على جهازك.</li>
+      <li>
+        اكتب الأمر التالي واستبدل <code>YOUR_IP</code> بعنوان IP السيرفر الخاص بك:
+        <pre><code>ssh root@YOUR_IP</code></pre>
+      </li>
+      <li>عند طلب كلمة المرور، أدخلها (لن تظهر أي أحرف أثناء الكتابة — هذا طبيعي).</li>
+      <li>
+        بعد الدخول الناجح، ستظهر لك واجهة الطرفية وسترى شيئاً مثل:
+        <pre><code>root@vps:~#</code></pre>
+      </li>
+    </ol>
+
+    <div class="tip-box">
+      <strong>💡 نصيحة:</strong> إذا كانت المرة الأولى وظهرت رسالة <em>"Are you sure you want to continue connecting?"</em> اكتب <code>yes</code> واضغط Enter.
+    </div>
+
+    <!-- ====================== -->
+    <!-- SECTION 3: INSTALL    -->
+    <!-- ====================== -->
+    <h2 id="install">3. تثبيت 3x-ui</h2>
+
+    <p>بعد الدخول للسيرفر، نفّذ الأوامر التالية بالترتيب:</p>
+
+    <h3>الخطوة 1 — تحديث النظام أولاً (ضروري)</h3>
+    <pre><code>apt update && apt upgrade -y</code></pre>
+
+    <h3>الخطوة 2 — تثبيت 3x-ui بأمر واحد</h3>
+    <pre><code>bash &lt;(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)</code></pre>
+
+    <div class="tip-box">
+      <strong>💡 ماذا يحدث؟</strong> هذا الأمر يحمّل سكربت التثبيت الرسمي من GitHub ويشغّله. السكربت سيسألك خلال التثبيت عن:
+      <ul class="regular" style="margin-top:0.5rem;">
+        <li>اسم مستخدم لوحة التحكم</li>
+        <li>كلمة مرور لوحة التحكم</li>
+        <li>رقم البورت (Port) للوحة التحكم</li>
+      </ul>
+    </div>
+
+    <h3>اختيار اسم مستخدم وكلمة مرور قويين</h3>
+    <ul class="regular">
+      <li>اختر اسم مستخدم غير متوقع (ليس <code>admin</code> أو <code>root</code>)</li>
+      <li>كلمة المرور: استخدم مزيجاً من الأحرف الكبيرة والصغيرة والأرقام والرموز (مثل: <code>Kx9!vP2@mQ</code>)</li>
+      <li>اختر بورتاً مختلفاً عن الافتراضي <code>2053</code> (مثلاً <code>8443</code> أو أي رقم بين 1024–65535)</li>
+    </ul>
+
+    <h3>الخطوة 3 — التحقق من أن الخدمة تعمل</h3>
+    <pre><code>systemctl status x-ui</code></pre>
+    <p>إذا كانت الخدمة تعمل بشكل صحيح، ستظهر كلمة <strong style="color:#3aab5a;">active (running)</strong> باللون الأخضر.</p>
+
+    <!-- ====================== -->
+    <!-- SECTION 4: FIRST LOGIN -->
+    <!-- ====================== -->
+    <h2 id="first-login">4. الدخول للوحة وأول إعداد</h2>
+
+    <ol class="steps">
+      <li>
+        افتح المتصفح على جهازك وانتقل إلى:
+        <pre><code>http://YOUR_IP:YOUR_PORT</code></pre>
+        مثال: <code>http://1.2.3.4:8443</code>
+      </li>
+      <li>أدخل اسم المستخدم وكلمة المرور اللذين اخترتهما أثناء التثبيت.</li>
+      <li>
+        بعد الدخول:
+        <ul class="regular">
+          <li>اذهب إلى قائمة <strong>Inbounds</strong></li>
+          <li>اضغط على <strong>Add Inbound</strong></li>
+          <li>اختر البروتوكول المناسب (مثل VLESS أو VMess)</li>
+          <li>حدد رقم البورت، ثم احفظ</li>
+          <li>انسخ رابط الاتصال (أو كود QR) وأضفه في تطبيق V2Ray على جهازك</li>
+        </ul>
+      </li>
+    </ol>
+
+    <div class="tip-box">
+      <strong>💡 تطبيقات V2Ray الموصى بها:</strong><br/>
+      🖥️ Windows: <strong>V2rayN</strong> | 🤖 Android: <strong>V2rayNG</strong> أو <strong>NapsterNetV</strong> | 🍎 iOS: <strong>Streisand</strong> أو <strong>Shadowrocket</strong>
+    </div>
+
+    <!-- ====================== -->
+    <!-- SECTION 5: SECURITY   -->
+    <!-- ====================== -->
+    <h2 id="security">5. تأمين لوحة التحكم</h2>
+
+    <h3>5.1 تغيير بورت لوحة التحكم</h3>
+    <p>من داخل الطرفية، يمكنك تغيير البورت في أي وقت عبر قائمة إدارة 3x-ui:</p>
+    <pre><code>x-ui</code></pre>
+    <p>ستظهر قائمة رقمية. اختر الخيار المناسب لتغيير الإعدادات (عادةً خيار <strong>Settings</strong>).</p>
+
+    <h3>5.2 تغيير اسم المستخدم وكلمة المرور</h3>
+    <p>يمكنك تغيير بيانات الدخول من نفس قائمة <code>x-ui</code> أو من داخل لوحة التحكم ← <strong>Settings</strong>.</p>
+    <p>استخدم دائماً كلمة مرور من <strong>12 حرفاً على الأقل</strong> تحتوي على أرقام ورموز وأحرف مختلطة.</p>
+
+    <h3>5.3 ضبط جدار الحماية (UFW) لإغلاق البورتات غير الضرورية</h3>
+    <pre><code># تفعيل UFW
+ufw enable
+
+# السماح بـ SSH (مهم جداً — لا تتجاهل هذه الخطوة!)
+ufw allow 22/tcp
+
+# السماح ببورت لوحة 3x-ui (استبدل 8443 ببورتك)
+ufw allow 8443/tcp
+
+# السماح ببورتات الاتصال الخاصة بـ inbounds (استبدل بالبورت الذي أنشأته)
+ufw allow 443/tcp
+ufw allow 80/tcp
+
+# عرض الحالة
+ufw status</code></pre>
+
+    <div class="warning-box">
+      <div class="warn-title">⚠️ تحذير: لا تفعّل UFW قبل السماح لـ SSH (البورت 22)!</div>
+      <ul>
+        <li>إذا فعّلت UFW دون السماح لبورت 22، ستُقفل خارج السيرفر تماماً.</li>
+        <li>تأكد دائماً من تنفيذ <code>ufw allow 22/tcp</code> قبل <code>ufw enable</code>.</li>
+      </ul>
+    </div>
+
+    <h3>5.4 تغيير بورت SSH الافتراضي (اختياري — لكن موصى به)</h3>
+    <p>تغيير بورت SSH من 22 إلى رقم آخر يقلل محاولات الاختراق التلقائية:</p>
+    <pre><code># افتح ملف إعدادات SSH
+nano /etc/ssh/sshd_config
+
+# ابحث عن السطر: #Port 22
+# غيّره إلى (مثلاً): Port 2222
+
+# ثم أعد تشغيل SSH
+systemctl restart ssh
+
+# لا تنسَ السماح للبورت الجديد في UFW
+ufw allow 2222/tcp</code></pre>
+
+    <!-- ========================== -->
+    <!-- SECTION 6: TROUBLESHOOTING -->
+    <!-- ========================== -->
+    <h2 id="troubleshooting">6. استكشاف الأخطاء وإصلاحها</h2>
+
+    <h3>6.1 التحقق من حالة خدمة 3x-ui</h3>
+    <pre><code>systemctl status x-ui</code></pre>
+    <p>إذا كانت الخدمة متوقفة (<code>inactive</code> أو <code>failed</code>)، شغّلها مجدداً:</p>
+    <pre><code>systemctl restart x-ui</code></pre>
+    <p>لجعل الخدمة تبدأ تلقائياً عند إعادة تشغيل السيرفر:</p>
+    <pre><code>systemctl enable x-ui</code></pre>
+
+    <h3>6.2 عرض سجلات الأخطاء (Logs)</h3>
+    <pre><code># آخر 50 سطر من سجل x-ui
+journalctl -u x-ui -n 50
+
+# متابعة السجل بشكل مباشر (اضغط Ctrl+C للخروج)
+journalctl -u x-ui -f</code></pre>
+
+    <div class="tip-box">
+      <strong>💡 عند طلب المساعدة:</strong> يمكنك نسخ ما يظهر من <code>journalctl</code> (بعد إخفاء IP السيرفر) ومشاركته للحصول على دعم، دون الحاجة لمشاركة كلمة المرور أو IP.
+    </div>
+
+    <h3>6.3 التحقق من البورتات المفتوحة</h3>
+    <pre><code># عرض البورتات التي تستمع عليها الخدمات
+ss -tlnp
+
+# أو باستخدام netstat
+netstat -tlnp</code></pre>
+
+    <h3>6.4 التحقق من حالة UFW وفتح بورت معين</h3>
+    <pre><code># عرض قواعد جدار الحماية
+ufw status verbose
+
+# فتح بورت محدد (استبدل PORT برقم البورت)
+ufw allow PORT/tcp
+
+# إعادة تحميل القواعد
+ufw reload</code></pre>
+
+    <h3>6.5 فحص الاتصال من السيرفر نفسه</h3>
+    <pre><code># هل اللوحة تستجيب على البورت المحدد؟ (استبدل 8443 ببورتك)
+curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8443</code></pre>
+    <p>إذا كانت الاستجابة <code>200</code> أو <code>302</code>، فاللوحة تعمل. المشكلة قد تكون في جدار الحماية أو مزوّد الخدمة (يلزم فتح البورت من لوحة VPS).</p>
+
+    <h3>6.6 أخطاء شائعة وحلولها</h3>
+    <ul class="regular">
+      <li><strong>"Connection refused"</strong> عند فتح اللوحة: تحقق من أن الخدمة تعمل (<code>systemctl status x-ui</code>) وأن البورت مفتوح في UFW ولوحة التحكم الخاصة بمزوّد الـ VPS.</li>
+      <li><strong>"This site can't be reached"</strong>: تأكد من صحة IP والبورت. تحقق من UFW. تأكد من أن مزوّد الـ VPS لا يحجب البورت.</li>
+      <li><strong>خدمة x-ui تتعطل باستمرار</strong>: اقرأ السجل عبر <code>journalctl -u x-ui -n 100</code> لمعرفة سبب الخطأ.</li>
+      <li><strong>نسيت كلمة مرور اللوحة</strong>: من الطرفية نفّذ <code>x-ui</code> واختر خيار Reset Credentials.</li>
+    </ul>
+
+    <!-- ========================== -->
+    <!-- SECTION 7: TLS (OPTIONAL) -->
+    <!-- ========================== -->
+    <h2 id="tls-optional">7. تفعيل HTTPS (TLS) عبر Nginx أو Caddy — اختياري</h2>
+
+    <p>تشغيل اللوحة على HTTP فقط يعني أن البيانات تنتقل بدون تشفير. إضافة TLS (HTTPS) يُحسّن الأمان بشكل كبير.</p>
+
+    <div class="tip-box">
+      <strong>💡 المتطلب:</strong> تحتاج إلى <strong>اسم نطاق (Domain)</strong> مرتبط بـ IP السيرفر لإصدار شهادة SSL مجانية.
+    </div>
+
+    <h3>الخيار الأول: Caddy (الأسهل)</h3>
+    <p>Caddy يدير شهادة SSL تلقائياً بدون أي إعداد معقد:</p>
+    <pre><code># تثبيت Caddy
+apt install -y debian-keyring debian-archive-keyring apt-transport-https
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list
+apt update && apt install caddy -y</code></pre>
+
+    <p>ثم أنشئ ملف إعداد Caddy (<code>/etc/caddy/Caddyfile</code>):</p>
+    <pre><code>your-domain.com {
+    reverse_proxy 127.0.0.1:8443
+}</code></pre>
+    <p>أعد تشغيل Caddy:</p>
+    <pre><code>systemctl restart caddy</code></pre>
+    <p>الآن يمكنك الدخول عبر: <code>https://your-domain.com</code></p>
+
+    <h3>الخيار الثاني: Nginx + Certbot</h3>
+    <pre><code># تثبيت Nginx و Certbot
+apt install -y nginx certbot python3-certbot-nginx
+
+# إنشاء ملف إعداد Nginx (استبدل your-domain.com بنطاقك)
+cat > /etc/nginx/sites-available/3x-ui &lt;&lt;'EOF'
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:8443;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+}
+EOF
+
+ln -s /etc/nginx/sites-available/3x-ui /etc/nginx/sites-enabled/
+nginx -t && systemctl reload nginx
+
+# إصدار شهادة SSL مجانية من Let's Encrypt
+certbot --nginx -d your-domain.com</code></pre>
+
+    <p>بعد نجاح العملية، ستتحول اللوحة إلى HTTPS تلقائياً.</p>
+
+    <div class="success-box">
+      ✅ <strong>تهانينا!</strong> الآن لوحتك تعمل على HTTPS وهي أكثر أماناً. تذكر تجديد الشهادة تلقائياً عبر:
+      <pre style="background:#061a0e; margin-top:0.6rem;"><code>certbot renew --dry-run</code></pre>
+    </div>
+
+    <hr />
+
+    <!-- === QUICK REFERENCE === -->
+    <h2>📌 مرجع سريع — أهم الأوامر</h2>
+    <pre><code># بدء / إيقاف / إعادة تشغيل x-ui
+systemctl start x-ui
+systemctl stop x-ui
+systemctl restart x-ui
+
+# قائمة إدارة x-ui التفاعلية
+x-ui
+
+# عرض السجلات
+journalctl -u x-ui -n 50
+
+# التحقق من جدار الحماية
+ufw status
+
+# التحقق من البورتات النشطة
+ss -tlnp</code></pre>
+
+    <hr />
+
+    <div class="tip-box">
+      <strong>📞 هل واجهت مشكلة؟</strong><br/>
+      يمكنك مشاركة رسائل الخطأ (نص فقط، بدون IP أو كلمات مرور) للحصول على مساعدة في تشخيص المشكلة.
+      تذكر دائماً: <strong>لا تشارك بيانات الدخول أو IP السيرفر مع أي أحد.</strong>
+    </div>
+
+  </div><!-- end .page-wrap -->
+
+  <footer>
+    <p>© 2025 <a href="../index.html">algazali.me</a> — دليل تثبيت 3x-ui على VPS</p>
+    <p style="margin-top:0.4rem;">هذا الدليل للأغراض التعليمية. تأكد من الالتزام بقوانين بلدك وسياسات مزوّد الخدمة.</p>
+  </footer>
+
+</body>
+</html>
