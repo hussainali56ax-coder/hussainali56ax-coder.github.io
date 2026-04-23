@@ -1,8 +1,0 @@
-Metadata-Version: 2.4
-Name: video-downloader-bot
-Version: 0.1.0
-Summary: Telegram-first, reusable cross-platform video downloader service using yt-dlp
-Requires-Python: >=3.10
-Requires-Dist: python-telegram-bot==22.0
-Requires-Dist: yt-dlp>=2025.1.15
-Requires-Dist: python-dotenv==1.0.1
