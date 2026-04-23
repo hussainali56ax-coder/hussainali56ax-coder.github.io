@@ -38,7 +38,7 @@ video-downloader-bot/
 ## Setup
 
 ```bash
-cd /home/runner/work/hussainali56ax-coder.github.io/hussainali56ax-coder.github.io/video-downloader-bot
+cd video-downloader-bot
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -58,7 +58,7 @@ LOG_LEVEL=INFO
 ## Run
 
 ```bash
-cd /home/runner/work/hussainali56ax-coder.github.io/hussainali56ax-coder.github.io/video-downloader-bot
+cd video-downloader-bot
 source .venv/bin/activate
 python -m video_downloader_bot.main
 ```
@@ -66,7 +66,7 @@ python -m video_downloader_bot.main
 ## Docker
 
 ```bash
-cd /home/runner/work/hussainali56ax-coder.github.io/hussainali56ax-coder.github.io/video-downloader-bot
+cd video-downloader-bot
 docker build -t video-downloader-bot .
 docker run --rm -e TELEGRAM_BOT_TOKEN=your_real_token video-downloader-bot
 ```
